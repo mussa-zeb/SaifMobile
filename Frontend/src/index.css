@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand Colors */
+  --color-brand: #73152A;
+  --color-brand-hover: #591020;
+  --color-gold: #d4af37;
+  --color-gold-muted: #fdf8e8;
+
+  /* Backgrounds */
+  --color-base: #f8f8fa;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f1f1f5;
+
+  /* Text Colors (Forced dark values) */
+  --color-text-primary: #111827;
+  --color-text-secondary: #4b5563;
+  --color-text-muted: #9ca3af;
+
+  /* Status */
+  --color-success: #059669;
+  --color-danger: #dc2626;
+
+  /* Borders */
+  --color-border: #e5e7eb;
+  --color-border-hover: #d1d5db;
+
+  /* Fonts */
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-base);
+    color: var(--color-text-secondary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-text-primary);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  /* Force all paragraph text to be readable by default */
+  p {
+    color: var(--color-text-secondary);
+  }
+}
+
+@layer components {
+  /* Layout */
+  .page-container { @apply mx-auto max-w-7xl px-4 sm:px-8 lg:px-12 py-8 sm:py-12; }
+  .page-title { @apply text-2xl font-bold text-text-primary; }
+  .page-subtitle { @apply text-sm text-text-secondary mt-1; }
+
+  /* Cards */
+  .card {
+    @apply rounded-xl border border-border bg-surface overflow-hidden transition-all duration-300;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03);
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3 text-sm font-bold text-white transition-all duration-200 hover:bg-brand-hover active:scale-[0.98];
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-6 py-3 text-sm font-bold text-gray-800 transition-all hover:bg-gray-50 active:scale-[0.98];
+  }
+
+  /* Forms */
+  .input-field {
+    @apply w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20;
+  }
+  .input-label { @apply mb-2 block text-xs font-bold uppercase tracking-wider text-gray-600; }
+
+  /* Tables */
+  .data-table { @apply w-full text-left text-sm; }
+  .data-table thead { @apply border-b border-border bg-gray-50 text-xs uppercase tracking-wider text-gray-500; }
+  .data-table th { @apply px-4 py-4 font-bold; }
+  .data-table tbody { @apply divide-y divide-border; }
+  .data-table tr { @apply transition hover:bg-gray-50/50; }
+  .data-table td { @apply px-4 py-4; }
+
+  /* Badges */
+  .badge-success { @apply inline-flex items-center rounded-md bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700; }
+  .badge-danger { @apply inline-flex items-center rounded-md bg-red-50 px-2.5 py-1 text-xs font-bold text-red-700; }
+
+  /* Admin */
+  .admin-sidebar { @apply hidden w-64 flex-col border-r border-border bg-surface p-5 md:flex; }
+  .admin-nav-link { @apply flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-100 hover:text-gray-900; }
+  .admin-nav-link-active { @apply flex items-center gap-3 rounded-xl bg-brand/5 px-4 py-3 text-sm font-semibold text-brand; }
+
+  /* Modals */
+  .modal-overlay { @apply fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm; }
+  .modal-container { @apply max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-6 shadow-2xl; }
+}
