@@ -20,12 +20,12 @@ export default function Navbar() {
   }, [])
 
   return (
-    <header className={`navbar ${scrolled ? 'py-2 shadow-sm' : 'py-4'}`}>
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-12">
+    <header className={`navbar ${scrolled ? 'py-2 shadow-sm' : 'py-2'}`}>
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-12 h-20">
         
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
-          <img src="/logo.png" alt="Saif Mobile" className="h-10 w-auto object-contain" onError={(e) => e.target.style.display = 'none'} />
+          <img src="/logo.png" alt="Saif Mobile" className="h-12 lg:h-20 w-auto object-contain" onError={(e) => e.target.style.display = 'none'} />
           <div className="flex flex-col">
             <span className="text-xl font-black tracking-tight text-brand leading-none">SAIF MOBILE</span>
             <span className="text-[10px] font-bold tracking-[0.2em] text-gold uppercase mt-1">Premium Store</span>

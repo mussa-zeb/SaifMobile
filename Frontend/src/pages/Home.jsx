@@ -10,9 +10,9 @@ import ProductCard from '../components/ProductCard'
 import { WHATSAPP_NUMBER } from '../config'
 
 const categories = [
-  { key: 'mobile', label: 'Smartphones', Icon: Smartphone, desc: 'Original iPhones & Androids with verified IMEI.' },
-  { key: 'perfume', label: 'Fragrances', Icon: SprayCan, desc: 'Premium, long-lasting perfumes for every occasion.' },
-  { key: 'headphone', label: 'Audio & Accessories', Icon: Headphones, desc: 'High-quality sound and essential mobile accessories.' },
+  { key: 'mobile', label: 'Mobile Phones', Icon: Smartphone, desc: 'Original iPhones & Androids with verified IMEI.' },
+  { key: 'headphone', label: 'Accessories', Icon: Headphones, desc: 'High-quality sound and essential mobile accessories.' },
+  { key: 'perfume', label: 'Saif Perfumes', Icon: SprayCan, desc: 'Premium, long-lasting perfumes for every occasion.' },
 ]
 
 export default function Home() {
@@ -71,15 +71,15 @@ export default function Home() {
       <section className="py-20 bg-white border-y border-gray-200">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-3xl font-bold text-gray-900">What are you looking for?</h2>
+            <h2 className="text-2xl font-bold text-gray-900">What are you looking for?</h2>
           </div>
-          <div className="grid grid-cols-2 gap-4 md:gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-3 gap-4 md:gap-6 lg:grid-cols-3">
             {categories.map((c) => (
               <Link key={c.key} to={`/shop?category=${c.key}`} className="group p-5 md:p-8 flex flex-col items-center text-center bg-gray-50 rounded-2xl border border-gray-200 transition-all duration-300 hover:border-brand/30 hover:shadow-md">
-                <div className="h-12 w-12 md:h-16 md:w-16 rounded-2xl bg-[#fdf8e8] text-[#d4af37] flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform">
+                <div className="h-8 w-8 md:h-16 md:w-16 rounded-2xl bg-[#fdf8e8] text-[#d4af37] flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform">
                   <c.Icon className="h-6 w-6 md:h-8 md:w-8" />
                 </div>
-                <h3 className="text-base md:text-xl font-bold text-gray-900">{c.label}</h3>
+                <h3 className="text-xs md:text-xl font-bold text-gray-900">{c.label}</h3>
                 <p className="mt-2 text-xs md:text-sm text-gray-600 leading-relaxed hidden sm:block">{c.desc}</p>
               </Link>
             ))}

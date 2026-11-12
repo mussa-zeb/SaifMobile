@@ -9,18 +9,19 @@ router.post('/login', (req, res) => {
   const adminToken = process.env.ADMIN_TOKEN
 
   if (!adminEmail || !adminPassword || !adminToken) {
-    return res.status(500).json({ message: 'Server auth not configured' })
+    console.error('Auth Error: Missing ADMIN_EMAIL, ADMIN_PASSWORD, or ADMIN_TOKEN in .env')
+    return res.status(500).json({ message: 'Server auth is not configured. Please check backend environment variables.' })
   }
 
   if (!email || email.toLowerCase() !== adminEmail.toLowerCase()) {
-    return res.status(401).json({ message: 'Invalid email or password' })
+    return res.status(401).json({ message: 'Invalid credentials. The email address is incorrect.' })
   }
 
   if (password !== adminPassword) {
-    return res.status(401).json({ message: 'Invalid email or password' })
+    return res.status(401).json({ message: 'Invalid credentials. The password is incorrect.' })
   }
 
-  res.json({ token: adminToken })
+  res.json({ token: adminToken, message: 'Login successful!' })
 })
 
 export default router

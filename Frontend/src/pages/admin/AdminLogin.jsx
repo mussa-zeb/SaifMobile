@@ -19,19 +19,22 @@ export default function AdminLogin() {
       const data = await api.login(email, password)
       setToken(data.token)
       navigate('/admin')
-    } catch (err) { setError(err.message) } 
-    finally { setLoading(false) }
+    } catch (err) { 
+      setError(err.message) 
+    } finally { 
+      setLoading(false) 
+    }
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-base px-4">
       <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-8 shadow-2xl">
         <div className="mb-8 text-center">
-          <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-brand text-brand-text shadow-lg shadow-brand/20">
+          <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-brand text-white shadow-lg">
             <Store className="h-7 w-7" />
           </span>
           <h1 className="mt-5 text-2xl font-bold text-text-primary">Admin Portal</h1>
-          <p className="mt-1 text-sm">Sign in to manage your store</p>
+          <p className="mt-1 text-sm text-text-secondary">Sign in to manage your store</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -49,7 +52,7 @@ export default function AdminLogin() {
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required className="input-field pl-11" />
             </div>
           </div>
-          {error && <p className="rounded-lg bg-danger-muted px-3 py-2 text-sm text-danger">{error}</p>}
+          {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 font-bold">{error}</p>}
           <button type="submit" disabled={loading} className="btn-primary w-full py-3">
             {loading ? 'Signing in...' : 'Sign In'}
           </button>

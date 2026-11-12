@@ -6,7 +6,15 @@ import { requireAdmin } from '../middleware/auth.js'
 
 const router = Router()
 
-// 1. GET ALL SALES
+function renderPdf(doc) {
+  return new Promise((resolve, reject) => {
+    const chunks = []
+    doc.on('data', (chunk) => chunks.push(chunk))
+    doc.on('end', () => resolve(Buffer.concat(chunks)))
+    doc.on('error', reject)
+  })
+}
+
 router.get('/', async (req, res, next) => {
   try {
     const sales = await Sale.find().sort({ date: -1 }).lean()
@@ -14,21 +22,18 @@ router.get('/', async (req, res, next) => {
   } catch (e) { next(e) }
 })
 
-// 2. NEW CHECKOUT (Multi-item Sale)
 router.post('/checkout', requireAdmin, async (req, res, next) => {
   try {
-    const { items, customer, date } = req.body
-    if (!items || items.length === 0) return res.status(400).json({ message: 'No items in cart' })
-    if (!customer.name || !customer.number) return res.status(400).json({ message: 'Customer info required' })
+    const { items, customer, date, comments } = req.body
+    if (!items || items.length === 0) return res.status(400).json({ message: 'Cart is empty.' })
+    if (!customer || !customer.name || !customer.number) return res.status(400).json({ message: 'Customer name and contact required.' })
 
     const saleItems = []
-
     for (const item of items) {
       const product = await Product.findById(item.productId)
-      if (!product) return res.status(404).json({ message: `Product ${item.productName} not found` })
-      
+      if (!product) return res.status(404).json({ message: `Product ${item.productName} not found.` })
       const qty = Number(item.quantity) || 1
-      if (product.stock < qty) return res.status(400).json({ message: `Not enough stock for ${product.name}` })
+      if (product.stock < qty) return res.status(400).json({ message: `Not enough stock for ${product.name}.` })
 
       saleItems.push({
         productId: product._id,
@@ -36,144 +41,225 @@ router.post('/checkout', requireAdmin, async (req, res, next) => {
         category: product.category,
         imei1: product.imei1,
         imei2: product.imei2,
+        ptaStatus: product.ptaStatus,
+        batteryHealth: product.batteryHealth,
         color: product.color,
         costPrice: product.costPrice,
         sellPrice: Number(item.sellPrice) || product.listedPrice,
         quantity: qty,
+        comments: item.comments || '',
       })
-
       product.stock -= qty
       await product.save()
     }
 
-    const sale = await Sale.create({
-      items: saleItems,
-      customer,
-      date: date ? new Date(date) : new Date(),
-      status: 'completed'
-    })
-
-    res.status(201).json(sale)
+    const sale = await Sale.create({ items: saleItems, customer, comments: comments || '', date: date ? new Date(date) : new Date(), status: 'completed' })
+    res.status(201).json({ message: 'Sale completed!', sale })
   } catch (e) { next(e) }
 })
 
-// 3. RETURN SALE (Handles both NEW cart items and OLD single items)
+// PROCESS RETURN 
 router.post('/:id/return', requireAdmin, async (req, res, next) => {
   try {
     const sale = await Sale.findById(req.params.id)
-    if (!sale) return res.status(404).json({ message: 'Sale not found' })
-    if (sale.status === 'returned') return res.status(400).json({ message: 'Already returned' })
+    if (!sale) return res.status(404).json({ message: 'Sale not found.' })
+    if (sale.status === 'returned') return res.status(400).json({ message: 'Already returned.' })
 
-    // Restore Stock FIRST before marking as returned
+    // 1. Apply the edits (new cost price, battery health, comments, etc.) to the Sale
+    if (req.body.items) {
+      sale.items = req.body.items.map(it => ({
+        ...it,
+        costPrice: Number(it.costPrice),
+        sellPrice: Number(it.sellPrice),
+        quantity: Number(it.quantity)
+      }))
+      sale.markModified('items') // Force Mongoose to save the nested array changes
+    }
+
+    // 2. Restore Stock AND update the original Product's inventory details
     if (sale.items && sale.items.length > 0) {
-      // NEW FORMAT (Cart)
       for (const item of sale.items) {
         if (item.productId) {
           const product = await Product.findById(item.productId)
           if (product) {
+            // Restore Stock
             if (product.category === 'mobile') {
-              product.stock = 1 // Mobiles are unique
+              product.stock = 1
             } else {
-              product.stock += item.quantity || 1 // Add exact quantity back
+              product.stock += item.quantity || 1
             }
+            
+            // Update Product with the condition/value it was returned in
+            product.costPrice = Number(item.costPrice) || product.costPrice
+            product.listedPrice = Number(item.sellPrice) || product.listedPrice
+            product.batteryHealth = item.batteryHealth || product.batteryHealth
+            product.ptaStatus = item.ptaStatus || product.ptaStatus
+            product.color = item.color || product.color
+            product.comments = item.comments || product.comments
+            
             await product.save()
           }
         }
       }
-    } else if (sale.productId) {
-      // OLD FORMAT (Single item)
-      const product = await Product.findById(sale.productId)
-      if (product) {
-        if (product.category === 'mobile') {
-          product.stock = 1
-        } else {
-          product.stock += 1
-        }
-        await product.save()
-      }
     }
 
-    // Mark as returned AFTER stock is safely restored
     sale.status = 'returned'
     await sale.save()
-
-    res.json({ message: 'Sale returned and stock restored.' })
+    res.json({ message: 'Sale returned, data updated, and stock restored.' })
   } catch (e) { next(e) }
 })
 
-// 4. EXPORT TO PDF
 router.get('/export', requireAdmin, async (req, res, next) => {
   try {
-    const sales = await Sale.find({ status: 'completed' }).sort({ date: -1 }).lean()
-    const doc = new PDFDocument({ margin: 40, size: 'A4' })
+    const { startDate, endDate } = req.query
+    const filter = { status: 'completed' }
     
-    res.setHeader('Content-Type', 'application/pdf')
-    res.setHeader('Content-Disposition', 'attachment; filename="sales-report.pdf"')
-    doc.pipe(res)
-
-    doc.fontSize(20).font('Helvetica-Bold').text('SAIF MOBILE', { align: 'center' })
-    doc.fontSize(12).font('Helvetica').text('Sales & Profit Report', { align: 'center' })
-    doc.moveDown(2)
-
-    const tableTop = doc.y
-    doc.fontSize(10).font('Helvetica-Bold')
-    doc.text('Date', 40, tableTop)
-    doc.text('Items', 130, tableTop)
-    doc.text('Customer', 320, tableTop)
-    doc.text('Total', 450, tableTop, { width: 70, align: 'right' })
-    doc.text('Profit', 520, tableTop, { width: 70, align: 'right' })
-
-    doc.moveTo(40, tableTop + 15).lineTo(550, tableTop + 15).stroke()
-
-    let y = tableTop + 25
-    let totalProfit = 0
-
-    sales.forEach((sale) => {
-      let saleProfit = 0
-      let saleTotal = 0
-      let itemNames = []
-
-      if (sale.items && sale.items.length > 0) {
-        sale.items.forEach(item => {
-          saleProfit += (item.sellPrice - item.costPrice) * item.quantity
-          saleTotal += item.sellPrice * item.quantity
-          itemNames.push(`${item.quantity}x ${item.productName}`)
-        })
-      } else {
-        // Old format fallback for PDF
-        saleProfit += (sale.sellPrice || 0) - (sale.costPrice || 0)
-        saleTotal += sale.sellPrice || 0
-        itemNames.push(`1x ${sale.productName || 'Unknown'}`)
+    if (startDate || endDate) {
+      filter.date = {}
+      if (startDate) filter.date.$gte = new Date(startDate)
+      if (endDate) {
+        const end = new Date(endDate)
+        end.setHours(23, 59, 59, 999)
+        filter.date.$lte = end
       }
+    }
 
-      totalProfit += saleProfit
-      const namesStr = itemNames.join(', ').substring(0, 30)
+    const sales = await Sale.find(filter).sort({ date: -1 }).lean()
+    
+    if (sales.length === 0) {
+      return res.status(400).json({ message: 'Cannot generate PDF: No sales found for the selected date range.' })
+    }
 
-      doc.fontSize(9).font('Helvetica')
-      doc.text(new Date(sale.date).toLocaleDateString(), 40, y)
-      doc.text(namesStr, 130, y)
-      doc.text(sale.customer.name.substring(0, 15), 320, y)
-      doc.text(String(saleTotal), 450, y, { width: 70, align: 'right' })
-      
-      if (saleProfit >= 0) {
-        doc.fillColor('#059669').text(`+${saleProfit}`, 520, y, { width: 70, align: 'right' })
-      } else {
-        doc.fillColor('#dc2626').text(`${saleProfit}`, 520, y, { width: 70, align: 'right' })
-      }
-      doc.fillColor('#000000')
+    const doc = new PDFDocument({ margin: 30, size: 'A4', layout: 'landscape' })
+    const promise = renderPdf(doc)
 
-      y += 20
-      if (y > 700) {
-        doc.addPage()
-        y = 40
-      }
+    doc.fontSize(18).font('Helvetica-Bold').text('SAIF MOBILE - SALES REPORT', { align: 'center' })
+    doc.fontSize(11).font('Helvetica').text(`Date Range: ${startDate || 'All Time'} to ${endDate || 'Present'}`, { align: 'center' })
+    doc.moveDown(1.5)
+
+    const allSaleItems = []
+    sales.forEach(sale => {
+      sale.items.forEach(item => {
+        allSaleItems.push({ ...item, date: sale.date, customer: sale.customer, comments: item.comments || sale.comments })
+      })
     })
 
-    doc.moveTo(40, y + 10).lineTo(550, y + 10).stroke()
-    doc.fontSize(12).font('Helvetica-Bold').text('Total Net Profit:', 400, y + 20)
-    doc.text(`${totalProfit}`, 520, y + 20, { width: 70, align: 'right' })
+    const categories = ['mobile', 'perfume', 'headphone']
+    const catLabels = { mobile: 'MOBILES', perfume: 'PERFUMES', headphone: 'ACCESSORIES' }
+    
+    const safe = (v, len = 18) => String(v == null ? '' : v).substring(0, len) || '—'
+    let currentY = doc.y
+    let grandTotalRevenue = 0
+    let grandTotalProfit = 0
+
+    categories.forEach(cat => {
+      const catItems = allSaleItems.filter(i => i.category === cat)
+      if (catItems.length === 0) return
+
+      if (currentY > 480) {
+        doc.addPage()
+        currentY = 40
+      }
+
+      doc.fontSize(12).font('Helvetica-Bold').fillColor('#73152A').text(catLabels[cat], 30, currentY)
+      doc.fillColor('#000000')
+      currentY += 20
+
+      doc.fontSize(8).font('Helvetica-Bold')
+
+      if (cat === 'mobile') {
+        doc.text('Sale Date', 30, currentY, { width: 55 })
+        doc.text('Customer', 90, currentY, { width: 75 })
+        doc.text('Model', 170, currentY, { width: 100 })
+        doc.text('IMEI 1', 275, currentY, { width: 85 })
+        doc.text('IMEI 2', 365, currentY, { width: 85 })
+        doc.text('PTA Status', 455, currentY, { width: 55 })
+        doc.text('Battery', 515, currentY, { width: 55 })
+        doc.text('Total', 575, currentY, { width: 55, align: 'right' })
+        doc.text('Profit', 635, currentY, { width: 55, align: 'right' })
+        doc.text('Comments', 695, currentY, { width: 110 })
+      } else {
+        doc.text('Sale Date', 30, currentY, { width: 65 })
+        doc.text('Customer', 100, currentY, { width: 100 })
+        doc.text('Model / Name', 210, currentY, { width: 150 })
+        doc.text('Qty', 370, currentY, { width: 40, align: 'center' })
+        doc.text('Sell Price', 430, currentY, { width: 70, align: 'right' })
+        doc.text('Profit', 520, currentY, { width: 70, align: 'right' })
+        doc.text('Comments', 610, currentY, { width: 150 })
+      }
+
+      doc.moveTo(30, currentY + 12).lineTo(810, currentY + 12).stroke()
+      currentY += 20
+
+      let catRevenue = 0
+      let catProfit = 0
+
+      catItems.forEach(i => {
+        if (currentY > 540) {
+          doc.addPage()
+          currentY = 40
+        }
+        const itemTotal = i.sellPrice * i.quantity
+        const itemProfit = (i.sellPrice - i.costPrice) * i.quantity
+        catRevenue += itemTotal
+        catProfit += itemProfit
+
+        doc.fontSize(7.5).font('Helvetica')
+
+        if (cat === 'mobile') {
+          doc.text(new Date(i.date).toLocaleDateString(), 30, currentY, { width: 55 })
+          doc.text(safe(i.customer.name, 15), 90, currentY, { width: 75 })
+          doc.text(safe(i.productName, 20), 170, currentY, { width: 100 })
+          doc.text(safe(i.imei1, 18), 275, currentY, { width: 85 })
+          doc.text(safe(i.imei2, 18), 365, currentY, { width: 85 })
+          doc.text(safe(i.ptaStatus, 10), 455, currentY, { width: 55 })
+          doc.text(safe(i.batteryHealth, 10), 515, currentY, { width: 55 })
+          doc.text(String(itemTotal), 575, currentY, { width: 55, align: 'right' })
+          if (itemProfit >= 0) doc.fillColor('#059669').text(`+${itemProfit}`, 635, currentY, { width: 55, align: 'right' })
+          else doc.fillColor('#dc2626').text(`${itemProfit}`, 635, currentY, { width: 55, align: 'right' })
+          doc.fillColor('#000000')
+          doc.text(safe(i.comments, 20), 695, currentY, { width: 110 })
+        } else {
+          doc.text(new Date(i.date).toLocaleDateString(), 30, currentY, { width: 65 })
+          doc.text(safe(i.customer.name, 15), 100, currentY, { width: 100 })
+          doc.text(safe(i.productName, 25), 210, currentY, { width: 150 })
+          doc.text(String(i.quantity), 370, currentY, { width: 40, align: 'center' })
+          doc.text(String(itemTotal), 430, currentY, { width: 70, align: 'right' })
+          if (itemProfit >= 0) doc.fillColor('#059669').text(`+${itemProfit}`, 520, currentY, { width: 70, align: 'right' })
+          else doc.fillColor('#dc2626').text(`${itemProfit}`, 520, currentY, { width: 70, align: 'right' })
+          doc.fillColor('#000000')
+          doc.text(safe(i.comments, 25), 610, currentY, { width: 150 })
+        }
+        currentY += 15
+      })
+
+      grandTotalRevenue += catRevenue
+      grandTotalProfit += catProfit
+
+      doc.fontSize(9).font('Helvetica-Bold')
+      doc.text(`Subtotal (${catItems.length} items):`, 430, currentY + 5, { width: 120, align: 'right' })
+      doc.text(`${catRevenue}`, 550, currentY + 5, { width: 60, align: 'right' })
+      doc.text(`${catProfit}`, 620, currentY + 5, { width: 60, align: 'right' })
+      currentY += 30
+    })
+
+    if (currentY > 520) {
+      doc.addPage()
+      currentY = 40
+    }
+    doc.moveTo(30, currentY).lineTo(810, currentY).stroke()
+    doc.fontSize(11).font('Helvetica-Bold')
+    doc.text('GRAND TOTAL REVENUE:', 400, currentY + 10, { width: 150, align: 'right' })
+    doc.text(`${grandTotalRevenue}`, 550, currentY + 10, { width: 60, align: 'right' })
+    doc.text('GRAND TOTAL PROFIT:', 400, currentY + 25, { width: 150, align: 'right' })
+    doc.fillColor('#059669').text(`${grandTotalProfit}`, 550, currentY + 25, { width: 60, align: 'right' })
 
     doc.end()
+    const pdfBuffer = await promise
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', 'attachment; filename="sales-report.pdf"')
+    res.setHeader('Content-Length', pdfBuffer.length)
+    res.end(pdfBuffer)
   } catch (e) { next(e) }
 })
 

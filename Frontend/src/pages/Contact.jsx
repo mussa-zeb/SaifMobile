@@ -52,8 +52,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="font-bold text-text-primary text-lg">Call Us</h3>
-                  <p className="text-sm text-text-secondary mt-1">Saif: 0311 870 4231</p>
-                  <p className="text-sm text-text-secondary">Fawad: 0300 907 2291</p>
+                  <p className="text-sm text-text-secondary mt-1">Muhammad Saif: 0311 870 4231</p>
                 </div>
               </div>
 
@@ -76,7 +75,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="font-bold text-text-primary text-lg">Visit the Store</h3>
-                  <p className="text-sm text-text-secondary mt-1">Main Bazar, Bannu, Khyber Pakhtunkhwa, Pakistan</p>
+                  <p className="text-sm text-text-secondary mt-1">Shop No.2, Pennell Plaza, Pareti Gate Bannu, Khyber Pakhtunkhwa, Pakistan</p>
                 </div>
               </div>
             </motion.div>

@@ -2,7 +2,6 @@ import { motion } from 'framer-motion'
 import { ShieldCheck, HeartHandshake, MapPin, Award } from 'lucide-react'
 import StoreInterior from "../assets/store-interior.jpeg"
 
-
 export default function About() {
   return (
     <div className="bg-base">
@@ -14,10 +13,10 @@ export default function About() {
             animate={{ opacity: 1, y: 0 }} 
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-text-primary tracking-tight">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-text-primary tracking-tight">
               More Than Just a Shop.
             </h1>
-            <p className="mt-6 text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
+            <p className="mt-6 text-md text-text-secondary max-w-2xl mx-auto leading-relaxed">
               We are a family-run business in the heart of Bannu, dedicated to bringing you the best in mobile technology and premium fragrances since day one.
             </p>
           </motion.div>
@@ -88,24 +87,24 @@ export default function About() {
       </section>
 
       {/* Values / Stats Bar */}
-      <section className="bg-white border-y border-border py-16">
+      <section className="bg-white border-y border-border py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
             <div>
-              <p className="text-4xl font-extrabold text-brand">8+</p>
-              <p className="text-sm font-bold text-text-secondary mt-1 uppercase tracking-wider">Years of Trust</p>
+              <p className="text-2xl sm:text-4xl font-extrabold text-brand">8+</p>
+              <p className="text-xs sm:text-sm font-bold text-text-secondary mt-1 uppercase tracking-wider">Years of Trust</p>
             </div>
             <div>
-              <p className="text-4xl font-extrabold text-brand">10k+</p>
-              <p className="text-sm font-bold text-text-secondary mt-1 uppercase tracking-wider">Happy Customers</p>
+              <p className="text-2xl sm:text-4xl font-extrabold text-brand">10k+</p>
+              <p className="text-xs sm:text-sm font-bold text-text-secondary mt-1 uppercase tracking-wider">Happy Customers</p>
             </div>
             <div>
-              <p className="text-4xl font-extrabold text-brand">100%</p>
-              <p className="text-sm font-bold text-text-secondary mt-1 uppercase tracking-wider">Original Stock</p>
+              <p className="text-2xl sm:text-4xl font-extrabold text-brand">100%</p>
+              <p className="text-xs sm:text-sm font-bold text-text-secondary mt-1 uppercase tracking-wider">Original Stock</p>
             </div>
             <div>
-              <p className="text-4xl font-extrabold text-brand">5.0</p>
-              <p className="text-sm font-bold text-text-secondary mt-1 uppercase tracking-wider">Google Rating</p>
+              <p className="text-2xl sm:text-4xl font-extrabold text-brand">5.0</p>
+              <p className="text-xs sm:text-sm font-bold text-text-secondary mt-1 uppercase tracking-wider">Google Rating</p>
             </div>
           </div>
         </div>

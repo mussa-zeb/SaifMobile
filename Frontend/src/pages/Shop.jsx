@@ -9,7 +9,7 @@ const categories = [
   { key: 'all', label: 'All' },
   { key: 'mobile', label: 'Mobiles' },
   { key: 'perfume', label: 'Perfumes' },
-  { key: 'headphone', label: 'Audio' },
+  { key: 'headphone', label: 'Accessories' },
 ]
 
 export default function Shop() {
@@ -62,7 +62,7 @@ export default function Shop() {
               key={c.key}
               type="button"
               onClick={() => c.key === 'all' ? setParams({}) : setParams({ category: c.key })}
-              className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition ${
+              className={`rounded-xl px-3.5 py-1.5 text-xs sm:px-5 sm:py-2.5 sm:text-sm font-semibold transition ${
                 category === c.key 
                   ? 'bg-brand text-white shadow-md' 
                   : 'bg-white border border-gray-200 text-gray-600 hover:border-brand hover:text-brand'

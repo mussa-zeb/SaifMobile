@@ -13,6 +13,7 @@ import FAQ from './pages/FAQ'
 import AdminLogin from './pages/admin/AdminLogin'
 import Dashboard from './pages/admin/Dashboard'
 import Products from './pages/admin/Products'
+import Inventory from './pages/admin/Inventory'
 import SoldItems from './pages/admin/SoldItems'
 import ProfitsLosses from './pages/admin/ProfitsLosses'
 
@@ -20,7 +21,6 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* User Panel */}
         <Route element={<UserLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
@@ -32,17 +32,10 @@ export default function App() {
           <Route path="/faq" element={<FAQ />} />
         </Route>
 
-        {/* Admin Panel */}
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <AdminLayout />
-            </ProtectedRoute>
-          }
-        >
+        <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />
+          <Route path="inventory" element={<Inventory />} />
           <Route path="products" element={<Products />} />
           <Route path="sold" element={<SoldItems />} />
           <Route path="profits" element={<ProfitsLosses />} />

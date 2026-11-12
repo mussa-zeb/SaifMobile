@@ -6,16 +6,12 @@ import { CURRENCY } from '../../config'
 
 function StatCard({ title, value, sub, Icon, accent = 'text-text-primary', iconBg = 'bg-gray-100', iconColor = 'text-gray-600' }) {
   return (
-    <div className="stat-card">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="stat-title text-[10px] sm:text-xs">{title}</p>
-          <p className={`stat-value text-xl sm:text-3xl ${accent}`}>{value}</p>
-          {sub && <p className="mt-1 text-[10px] sm:text-xs text-text-muted">{sub}</p>}
-        </div>
-        <span className={`grid h-8 w-8 sm:h-12 sm:w-12 place-items-center rounded-lg sm:rounded-xl ${iconBg} ${iconColor}`}>
-          <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
-        </span>
+    <div className="card p-3 sm:p-5 flex flex-col gap-2">
+      <span className={`grid h-8 w-8 sm:h-12 sm:w-12 place-items-center rounded-md shrink-0 ${iconBg} ${iconColor}`}><Icon className="h-4 w-4 sm:h-6 sm:w-6" /></span>
+      <div>
+        <p className="stat-title text-[10px] sm:text-sm text-text-secondary font-medium">{title}</p>
+        <p className={`stat-value text-md sm:text-2xl font-extrabold mt-1 ${accent}`}>{value}</p>
+        {sub && <p className="mt-0.5 text-[10px] text-text-muted">{sub}</p>}
       </div>
     </div>
   )
@@ -40,11 +36,13 @@ export default function Dashboard() {
   const [range, setRange] = useState('1w') 
 
   useEffect(() => {
-    setData(null)
-    api.getDashboard({ range }).then(setData).catch((e) => setError(e.message))
+    setData(null); setError('')
+    api.getDashboard({ range })
+      .then(setData)
+      .catch((e) => setError(`Failed to load dashboard data:\n\n${e.message}`))
   }, [range])
 
-  if (error) return <p className="text-danger font-bold p-8">{error}</p>
+  if (error) return <div className="p-8"><p className="text-red-600 font-bold bg-red-50 p-4 rounded-xl whitespace-pre-wrap">{error}</p></div>
   if (!data) return <p className="text-text-muted p-8 animate-pulse">Loading dashboard...</p>
 
   const trendData = data.trend || []
@@ -57,8 +55,6 @@ export default function Dashboard() {
           <h1 className="page-title text-xl sm:text-2xl">Dashboard</h1>
           <p className="page-subtitle text-xs sm:text-sm">Overview of your store's performance</p>
         </div>
-        
-        {/* Toggle Group - fits perfectly on mobile */}
         <div className="flex rounded-xl border border-border bg-gray-50 p-1 w-full sm:w-auto">
           {['1w', '1m', '90d', '1y'].map((t) => (
             <button key={t} onClick={() => setRange(t)} className={`flex-1 sm:flex-none rounded-lg px-2 sm:px-4 py-1.5 text-xs sm:text-sm font-bold transition-all ${range === t ? 'bg-brand text-white shadow-md' : 'text-text-secondary hover:text-text-primary hover:bg-white'}`}>
@@ -68,11 +64,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Grid is 2 cols on mobile, 3 on desktop exactly like screenshot */}
       <div className="mt-6 grid gap-3 sm:gap-5 grid-cols-2 lg:grid-cols-3">
         <StatCard title="Available Mobiles" value={data.available.mobile} sub="current stock" Icon={Smartphone} iconColor="text-brand" iconBg="bg-brand/10" />
         <StatCard title="Available Perfumes" value={data.available.perfume} sub="current stock" Icon={SprayCan} iconColor="text-gold" iconBg="bg-gold/10" />
-        <StatCard title="Available Headphones" value={data.available.headphone} sub="current stock" Icon={Headphones} iconColor="text-blue-600" iconBg="bg-blue-50" />
+        <StatCard title="Available Accessories" value={data.available.headphone} sub="current stock" Icon={Headphones} iconColor="text-blue-600" iconBg="bg-blue-50" />
         <StatCard title="Sales Revenue" value={`${CURRENCY} ${Number(data.rangeStats.salesTotal).toLocaleString()}`} sub={`${data.rangeStats.salesCount} items sold`} Icon={ShoppingCart} iconColor="text-success" iconBg="bg-success/10" />
         <StatCard title="Restocks" value={`${CURRENCY} ${Number(data.rangeStats.buysTotal).toLocaleString()}`} sub="added cost" Icon={Package} iconColor="text-text-secondary" iconBg="bg-gray-100" />
         <StatCard title="Profit / Loss" value={`${CURRENCY} ${Number(data.rangeStats.profit).toLocaleString()}`} sub="selected period" Icon={isProfit ? TrendingUp : TrendingDown} accent={isProfit ? 'text-success' : 'text-danger'} iconBg={isProfit ? 'bg-success/10' : 'bg-danger/10'} iconColor={isProfit ? 'text-success' : 'text-danger'} />
@@ -80,13 +75,8 @@ export default function Dashboard() {
 
       <div className="mt-6 sm:mt-8 card p-4 sm:p-6 w-full overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4 sm:mb-6">
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-text-primary">Profit Growth</h2>
-            <p className="text-xs sm:text-sm text-text-secondary mt-0.5">Daily profit</p>
-          </div>
-          <p className={`text-sm sm:text-xl font-black ${isProfit ? 'text-success' : 'text-danger'}`}>
-            {isProfit ? '+' : ''}{CURRENCY} {Number(data.rangeStats.profit).toLocaleString()}
-          </p>
+          <div><h2 className="text-base sm:text-lg font-bold text-text-primary">Profit Growth</h2><p className="text-xs sm:text-sm text-text-secondary mt-0.5">Daily profit</p></div>
+          <p className={`text-sm sm:text-xl font-black ${isProfit ? 'text-success' : 'text-danger'}`}>{isProfit ? '+' : ''}{CURRENCY} {Number(data.rangeStats.profit).toLocaleString()}</p>
         </div>
 
         <div className="h-[250px] sm:h-[350px] w-full">
