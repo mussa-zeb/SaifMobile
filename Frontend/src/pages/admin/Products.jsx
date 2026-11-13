@@ -21,8 +21,8 @@ const emptyForm = {
 
 function Modal({ title, onClose, children }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-white p-6 shadow-2xl">
+    <div className="modal-overlay">
+      <div className="modal-container max-w-lg">
         <div className="mb-5 flex items-center justify-between">
           <h3 className="text-lg font-bold text-text-primary">{title}</h3>
           <button type="button" onClick={onClose} className="rounded-lg p-1 text-text-muted hover:bg-gray-100"><X className="h-5 w-5" /></button>
@@ -39,7 +39,7 @@ export default function Products() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [modal, setModal] = useState(null) // 'cart' or 'details' or 'edit'
+  const [modal, setModal] = useState(null) 
 
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
@@ -127,6 +127,22 @@ export default function Products() {
   const cartTotal = cart.reduce((sum, item) => sum + (item.sellPrice * item.quantity), 0)
   const cartProfit = cart.reduce((sum, item) => sum + ((item.sellPrice - item.costPrice) * item.quantity), 0)
 
+  const renderImage = (p) => {
+    const imgSrc = p.images?.[0] || p.image;
+    if (!imgSrc) return <ImageOff className="h-4 w-4 text-text-muted" />;
+    return (
+      <>
+        <img 
+          src={imgSrc} 
+          alt="" 
+          className="h-full w-full object-cover" 
+          onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} 
+        />
+        <ImageOff className="hidden h-4 w-4 text-text-muted" />
+      </>
+    );
+  };
+
   return (
     <div className="page-container w-full overflow-hidden pb-24">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -151,7 +167,6 @@ export default function Products() {
 
       {error && <p className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 font-bold">{error}</p>}
 
-      {/* DESKTOP TABLE */}
       <div className="hidden md:block card overflow-x-auto bg-white rounded-xl border border-border">
         <table className="w-full text-left text-sm min-w-[800px]">
           <thead className="bg-gray-50 border-b border-border text-xs uppercase text-text-muted">
@@ -168,7 +183,7 @@ export default function Products() {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-gray-100 border border-border shrink-0">
-                      {p.images?.[0] || p.image ? <img src={p.images?.[0] || p.image} alt="" className="h-full w-full object-cover" /> : <ImageOff className="h-4 w-4 text-text-muted" />}
+                      {renderImage(p)}
                     </div>
                     <div><div className="font-bold text-text-primary">{p.name}</div><div className="text-xs text-text-muted">{p.color || '—'}</div></div>
                   </div>
@@ -199,14 +214,13 @@ export default function Products() {
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       </div>
 
-      {/* MOBILE CARDS */}
       <div className="md:hidden space-y-4">
         {currentProducts.map((p) => (
           <div key={p._id} onClick={() => openDetails(p)} className="bg-white rounded-xl border border-border p-4 flex flex-col gap-3 cursor-pointer hover:border-brand transition-colors">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-gray-50 border border-border shrink-0">
-                  {p.images?.[0] || p.image ? <img src={p.images?.[0] || p.image} alt="" className="h-full w-full object-cover" /> : <ImageOff className="h-5 w-5 text-text-muted" />}
+                  {renderImage(p)}
                 </div>
                 <div><h3 className="font-bold text-text-primary text-base leading-tight">{p.name}</h3><p className="text-xs text-text-secondary mt-0.5">{p.color || '—'}</p></div>
               </div>
@@ -230,7 +244,7 @@ export default function Products() {
 
       {/* FLOATING CART */}
       {cart.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-11/12 max-w-md z-40 animate-in slide-in-from-bottom">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-11/12 max-w-md z-50 animate-in slide-in-from-bottom">
           <button onClick={() => setModal('cart')} className="w-full bg-brand text-white rounded-xl shadow-2xl p-4 flex items-center justify-between hover:bg-brand-hover transition">
             <div className="flex items-center gap-3"><div className="bg-white/20 p-2 rounded-lg"><ShoppingBag className="h-5 w-5" /></div><span className="font-bold">{cart.reduce((s, i) => s + i.quantity, 0)} Items</span></div>
             <span className="font-bold">{CURRENCY} {cartTotal.toLocaleString()} →</span>
@@ -244,11 +258,7 @@ export default function Products() {
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="h-16 w-16 shrink-0 rounded-xl border border-border bg-gray-50 overflow-hidden flex items-center justify-center">
-                {selectedProduct.images?.[0] || selectedProduct.image ? (
-                  <img src={selectedProduct.images?.[0] || selectedProduct.image} alt={selectedProduct.name} className="h-full w-full object-cover" />
-                ) : (
-                  <ImageOff className="h-6 w-6 text-text-muted" />
-                )}
+                {renderImage(selectedProduct)}
               </div>
               <div>
                 <h3 className="text-base font-bold text-text-primary">{selectedProduct.name}</h3>

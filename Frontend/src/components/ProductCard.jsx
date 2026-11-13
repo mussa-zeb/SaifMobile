@@ -1,25 +1,52 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ImageOff } from 'lucide-react'
+import { ImageOff, Heart } from 'lucide-react'
 import { CURRENCY } from '../config'
+import { isFavorite, toggleFavorite } from '../utils/favorites'
 
 const labels = { mobile: 'Mobile', perfume: 'Perfume', headphone: 'Audio' }
 
 export default function ProductCard({ product }) {
-  // Use the first image from the array, or fallback to the old single image
+  const [imgError, setImgError] = useState(false)
+  const [fav, setFav] = useState(false)
   const displayImage = product.images?.[0] || product.image;
+
+  useEffect(() => {
+    setFav(isFavorite(product._id))
+  }, [product._id])
+
+  const handleFav = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const newState = toggleFavorite(product._id)
+    setFav(newState)
+  }
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
-      <Link to={`/item/${product._id}`} className="card group flex flex-col h-full rounded-xl overflow-hidden">
+      <Link to={`/item/${product._id}`} className="card group flex flex-col h-full rounded-xl overflow-hidden relative">
         
+        {/* Heart Icon */}
+        <button 
+          onClick={handleFav}
+          className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 p-1.5 sm:p-2 bg-white/90 backdrop-blur-md rounded-full shadow-sm hover:scale-110 transition-transform"
+        >
+          <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${fav ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+        </button>
+
         <div className="relative aspect-square sm:aspect-[4/5] overflow-hidden bg-gray-50 flex items-center justify-center">
-          {displayImage ? (
-            <img src={displayImage} alt={product.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+          {displayImage && !imgError ? (
+            <img 
+              src={displayImage} 
+              alt={product.name} 
+              className="h-full w-full object-cover transition duration-500 group-hover:scale-105" 
+              onError={() => setImgError(true)}
+            />
           ) : (
             <ImageOff className="h-8 w-8 sm:h-12 sm:w-12 text-gray-300" />
           )}
-          <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-white/90 backdrop-blur-md px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold text-brand shadow-sm">
+          <span className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 bg-white/90 backdrop-blur-md px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold text-brand shadow-sm">
             {labels[product.category] || product.category}
           </span>
         </div>

@@ -60,6 +60,9 @@
   .page-title { @apply text-2xl font-bold text-text-primary; }
   .page-subtitle { @apply text-sm text-text-secondary mt-1; }
 
+  /* Navbar */
+  .navbar { @apply sticky top-0 z-50 bg-surface/95 backdrop-blur-md border-b border-border transition-all duration-300; }
+
   /* Cards */
   .card {
     @apply rounded-xl border border-border bg-surface overflow-hidden transition-all duration-300;
@@ -98,6 +101,6 @@
   .admin-nav-link-active { @apply flex items-center gap-3 rounded-xl bg-brand/5 px-4 py-3 text-sm font-semibold text-brand; }
 
   /* Modals */
-  .modal-overlay { @apply fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm; }
+  .modal-overlay { @apply fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm; }
   .modal-container { @apply max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-6 shadow-2xl; }
 }

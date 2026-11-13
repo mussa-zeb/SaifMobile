@@ -5,6 +5,7 @@ import AdminLayout from './components/AdminLayout'
 import Home from './pages/Home'
 import Shop from './pages/Shop'
 import ItemDetail from './pages/ItemDetail'
+import Favorites from './pages/Favorites'
 import About from './pages/About'
 import Contact from './pages/Contact'
 import Terms from './pages/Terms'
@@ -21,10 +22,12 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* User Panel */}
         <Route element={<UserLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/item/:id" element={<ItemDetail />} />
+          <Route path="/favorites" element={<Favorites />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/terms" element={<Terms />} />
@@ -32,8 +35,16 @@ export default function App() {
           <Route path="/faq" element={<FAQ />} />
         </Route>
 
+        {/* Admin Panel */}
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<Dashboard />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="products" element={<Products />} />

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Heart } from 'lucide-react'
+import { getFavorites } from '../utils/favorites'
 
 const links = [
   { to: '/', label: 'Home' },
@@ -12,6 +13,16 @@ const links = [
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [favCount, setFavCount] = useState(0)
+
+  // Update count on mount and when favorites change
+  useEffect(() => {
+    const updateCount = () => setFavCount(getFavorites().length)
+    updateCount()
+    
+    window.addEventListener('favoritesUpdated', updateCount)
+    return () => window.removeEventListener('favoritesUpdated', updateCount)
+  }, [])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10)
@@ -39,18 +50,49 @@ export default function Navbar() {
               {l.label}
             </NavLink>
           ))}
+          
+          <div className="h-6 w-[1px] bg-gray-200 mx-1"></div>
+
+          {/* Premium Wishlist Button */}
+          <Link 
+            to="/favorites" 
+            className="relative p-2.5 text-gray-600 hover:text-brand hover:bg-gray-50 rounded-full transition-all group"
+            title="Saved Items"
+          >
+            <Heart className="h-5 w-5 group-hover:scale-110 transition-transform" />
+            {favCount > 0 && (
+              <span className="absolute top-0 right-0 inline-flex items-center justify-center h-4 w-4 rounded-full bg-brand text-[10px] font-bold text-white shadow-sm border-2 border-white">
+                {favCount}
+              </span>
+            )}
+          </Link>
+
           <Link to="/admin/login" className="btn-secondary !py-2 !px-4 text-xs">Admin Login</Link>
         </nav>
 
-        {/* Mobile Toggle */}
-        <button onClick={() => setOpen(!open)} className="rounded-lg p-2 text-text-secondary md:hidden hover:bg-gray-100">
-          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        {/* Mobile Toggle & Mobile Wishlist Icon */}
+        <div className="flex items-center gap-2 md:hidden">
+          <Link 
+            to="/favorites" 
+            className="relative p-2 text-gray-600 hover:text-brand transition-all"
+          >
+            <Heart className="h-6 w-6" />
+            {favCount > 0 && (
+              <span className="absolute top-0 right-0 inline-flex items-center justify-center h-4 w-4 rounded-full bg-brand text-[10px] font-bold text-white border-2 border-white">
+                {favCount}
+              </span>
+            )}
+          </Link>
+          
+          <button onClick={() => setOpen(!open)} className="rounded-lg p-2 text-text-secondary hover:bg-gray-100">
+            {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Dropdown */}
       {open && (
-        <div className="border-t border-border bg-surface md:hidden absolute w-full shadow-xl">
+        <div className="absolute top-full left-0 w-full z-50 border-t border-border bg-surface md:hidden shadow-xl">
           <div className="flex flex-col gap-1 p-5">
             {links.map((l) => (
               <NavLink key={l.to} to={l.to} onClick={() => setOpen(false)} className={({ isActive }) => isActive ? 'admin-nav-link-active' : 'admin-nav-link'}>

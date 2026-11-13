@@ -20,8 +20,8 @@ const emptyForm = {
 
 function Modal({ title, onClose, children }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-white p-6 shadow-2xl">
+    <div className="modal-overlay">
+      <div className="modal-container max-w-lg">
         <div className="mb-5 flex items-center justify-between">
           <h3 className="text-lg font-bold text-text-primary">{title}</h3>
           <button type="button" onClick={onClose} className="rounded-lg p-1 text-text-muted hover:bg-gray-100"><X className="h-5 w-5" /></button>
@@ -39,7 +39,7 @@ export default function Inventory() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   
-  const [modal, setModal] = useState(null) // 'form' or 'download'
+  const [modal, setModal] = useState(null) 
   const [downloading, setDownloading] = useState(false)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -109,6 +109,22 @@ export default function Inventory() {
     }
   }
 
+  const renderImage = (p) => {
+    const imgSrc = p.images?.[0] || p.image;
+    if (!imgSrc) return <ImageOff className="h-4 w-4 text-text-muted" />;
+    return (
+      <>
+        <img 
+          src={imgSrc} 
+          alt="" 
+          className="h-full w-full object-cover" 
+          onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} 
+        />
+        <ImageOff className="hidden h-4 w-4 text-text-muted" />
+      </>
+    );
+  };
+
   return (
     <div className="page-container w-full overflow-hidden pb-24">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -158,7 +174,7 @@ export default function Inventory() {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-gray-100 border border-border shrink-0">
-                      {p.images?.[0] || p.image ? <img src={p.images?.[0] || p.image} alt="" className="h-full w-full object-cover" /> : <ImageOff className="h-4 w-4 text-text-muted" />}
+                      {renderImage(p)}
                     </div>
                     <div>
                       <div className="font-bold text-text-primary">{p.name}</div>
@@ -201,7 +217,7 @@ export default function Inventory() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-gray-50 border border-border shrink-0">
-                  {p.images?.[0] || p.image ? <img src={p.images?.[0] || p.image} alt="" className="h-full w-full object-cover" /> : <ImageOff className="h-5 w-5 text-text-muted" />}
+                  {renderImage(p)}
                 </div>
                 <div><h3 className="font-bold text-text-primary text-base leading-tight">{p.name}</h3><p className="text-xs text-text-secondary mt-0.5">{p.supplierName || '—'}</p></div>
               </div>
@@ -243,7 +259,6 @@ export default function Inventory() {
               <div><label className="block text-xs font-bold text-gray-600 uppercase mb-1">Stock</label><input type="number" min="0" required value={form.category === 'mobile' ? '1' : form.stock} disabled={form.category === 'mobile'} onChange={(e) => setForm({ ...form, stock: e.target.value })} className={`w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-brand ${form.category === 'mobile' ? 'bg-gray-100 text-gray-400' : ''}`} /></div>
             </div>
 
-            {/* Show Supplier info ONLY for Mobiles */}
             {form.category === 'mobile' && (
               <div className="border-t border-border pt-4">
                 <h4 className="text-xs font-bold text-brand uppercase mb-3">Supplier &amp; Purchase Info</h4>

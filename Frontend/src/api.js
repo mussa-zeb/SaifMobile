@@ -17,19 +17,19 @@ async function request(path, options = {}) {
     throw new Error('Network Error: Could not reach the backend server. It might be sleeping or offline. Please wait a moment and try again.')
   }
 
-  // Handle 401 Unauthorized automatically
-  if (res.status === 401) {
-    clearToken()
-    window.location.href = '/admin/login' // Force redirect to login
-    throw new Error('Session expired or invalid token. Please log in again.')
-  }
-
   if (!res.ok) {
     let message = `Request failed with status code ${res.status}.`
     try {
       const data = await res.json()
       if (data.message) message = data.message
     } catch { /* Not a JSON error response */ }
+    
+    // REMOVED the forced window.location.href = '/admin/login' redirect here.
+    // Now it just throws the error so the UI shows the alert without logging you out.
+    if (res.status === 401) {
+      throw new Error('Unauthorized: Your admin token is invalid or missing. Please check your backend settings.')
+    }
+
     throw new Error(message)
   }
 
@@ -44,12 +44,6 @@ async function downloadPdf(path, filename) {
     res = await fetch(API_URL + path, { headers: { 'x-admin-token': getToken() } })
   } catch (err) {
     throw new Error('Network Error: Could not connect to server to download the PDF.')
-  }
-
-  if (res.status === 401) {
-    clearToken()
-    window.location.href = '/admin/login'
-    throw new Error('Session expired. Please log in again.')
   }
 
   if (!res.ok) {
